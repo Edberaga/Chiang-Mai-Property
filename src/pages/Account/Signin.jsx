@@ -81,7 +81,7 @@ export default function SignIn() {
                 />
               )}
             </div>
-            <div className="flex justify-between whitespace-nowrap text-sm sm:text-lg">
+            <div className="flex justify-end py-3 whitespace-nowrap text-sm sm:text-lg">
               <p>
                 <Link
                   to="/forgot-password"
