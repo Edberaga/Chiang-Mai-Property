@@ -1,18 +1,31 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import logo from '../assets/images/logo.png'
+import { auth } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default function Header() {
-    const location = useLocation();
-    const navigate = useNavigate();
-    console.log(location.pathname);
+  const [pageState, setPageState] = useState("Sign in");
+  const location = useLocation();
+  const navigate = useNavigate();
+  console.log(location.pathname);
 
-    function pathMatchRoute(route) {
+  useEffect(() => {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setPageState("Profile");
+      } else {
+        setPageState("Sign in");
+      }
+    });
+  }, [auth]);
+
+  function pathMatchRoute(route) {
     if (route === location.pathname) {
       return true;
     }
   }
-    
+
   return (
   <div className="bg-white border-b shadow-sm sticky top-0 z-40">
   <header className='flex justify-between items-center px-3 max-w-6xl mx-auto'>
@@ -21,7 +34,7 @@ export default function Header() {
       src={logo} 
       alt="Chiang Mai Property Invest logo"
       className='w-[240px] cursor-pointer'
-      onClick={() => navigate("/profile")}
+      onClick={() => navigate("/")}
       />
     </div>
 
@@ -53,9 +66,9 @@ export default function Header() {
           ? "text-black border-b-red-500" 
           : "text-gray-400 border-b-transparent"}
           `}
-          onClick={() => navigate("/signin")}
+          onClick={() => navigate("/profile")}
         >
-          Sign in
+          {pageState}
         </li>
       </ul>
     </div>
