@@ -11,6 +11,7 @@ import ForgotPass from './pages/Account/ForgotPass'
 import Header from './components/Header'
 import Offers from './pages/Offers'
 import PrivateRoute from './components/PrivateRoute';
+import CreateProp from './pages/CreateProp';
 
 function App() {
   console.log("It is rendering!");
@@ -25,6 +26,7 @@ function App() {
       {/*Account routes */}
       <Route path="/profile" element={<PrivateRoute />}>
         <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/create-property" element={<CreateProp />} />
       </Route>
 
       <Route path="/signin" element={<Signin/>}/>
