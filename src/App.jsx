@@ -29,7 +29,7 @@ function App() {
         <Route path="/profile/create-property" element={<CreateProp />} />
       </Route>
 
-      <Route path="/signin" element={<Signin/>}/>
+      <Route path="/sign-in" element={<Signin/>}/>
       <Route path="/forgot-password" element={<ForgotPass/>}/>
     </Routes>
   </Router>
