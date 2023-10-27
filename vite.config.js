@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import dotenv from 'dotenv'
+import mkcert from'vite-plugin-mkcert'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), mkcert()],
   define:{
     'process.env.VITE_FIREBASE_API_KEY': JSON.stringify(process.env.VITE_FIREBASE_API_KEY),
     'process.env.VITE_FIREBASE_AUTH_DOMAIN': JSON.stringify(process.env.VITE_FIREBASE_AUTH_DOMAIN),
@@ -13,5 +14,8 @@ export default defineConfig({
     'process.env.VITE_FIREBASE_SENDER_ID': JSON.stringify(process.env.VITE_FIREBASE_SENDER_ID),
     'process.env.VITE_FIREBASE_APP_ID': JSON.stringify(process.env.VITE_FIREBASE_APP_ID),
     'process.env.VITE_FIREBASE_MEASUREMENT_ID ': JSON.stringify(process.env.VITE_FIREBASE_MEASUREMENT_ID ),
-  }
+  },
+  server: {
+    https: true
+  },
 })
