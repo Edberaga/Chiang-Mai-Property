@@ -62,7 +62,7 @@ export default function Header() {
         </li>
         <li
           className={`
-          cursor-pointer p-6 text-sm font-semibold border-b-[3px] ${pathMatchRoute("/signin") || pathMatchRoute("/profile")
+          cursor-pointer p-6 text-sm font-semibold border-b-[3px] ${pathMatchRoute("/sign-in") || pathMatchRoute("/profile")
           ? "text-black border-b-red-500" 
           : "text-gray-400 border-b-transparent"}
           `}
