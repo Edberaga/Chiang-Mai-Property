@@ -1,133 +1,153 @@
-import React, { useState } from 'react'
+import { useState } from "react";
 import Spinner from "../components/Spinner";
 import { toast } from "react-toastify";
 import {
+  getStorage,
   ref,
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
-import {v4 as uuidv4} from 'uuid';
+import { getAuth } from "firebase/auth";
+import { v4 as uuidv4 } from "uuid";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "../firebase";
 import { useNavigate } from "react-router-dom";
-import { auth, storage } from '../firebase';
 
-export default function CreateProp() {
-    const [geolocationEnabled, setGeolocationEnabled] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({
-        type: "rent",
-        name: "",
-        bedrooms: 1,
-        bathrooms: 1,
-        parking: false,
-        furnished: false,
-        address: "",
-        description: "",
-        offer: false,
-        regularPrice: 0,
-        discountedPrice: 0,
-        latitude: 0,
-        longitude: 0,
-        images: {},
-      });
-      const {
-        type,
-        name,
-        bedrooms,
-        bathrooms,
-        parking,
-        address,
-        furnished,
-        description,
-        offer,
-        regularPrice,
-        discountedPrice,
-        latitude,
-        longitude,
-        images,
-      } = formData;
+export default function CreateListing() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    type: "rent",
+    name: "",
+    bedrooms: 1,
+    bathrooms: 1,
+    parking: false,
+    furnished: false,
+    address: "",
+    description: "",
+    offer: false,
+    regularPrice: 0,
+    discountedPrice: 0,
+    latitude: 0,
+    longitude: 0,
+    images: {},
+  });
+  const {
+    type,
+    name,
+    bedrooms,
+    bathrooms,
+    parking,
+    address,
+    furnished,
+    description,
+    offer,
+    regularPrice,
+    discountedPrice,
+    latitude,
+    longitude,
+    images,
+  } = formData;
 
-  function onChange(e) { 
+  function onChange(e) {
     let boolean = null;
-
-    if(e.target.value === "true") {
-        boolean = true;
+    if (e.target.value === "true") {
+      boolean = true;
     }
-    if(e.target.value === "false") {
-        boolean = false;
+    if (e.target.value === "false") {
+      boolean = false;
     }
-    if(e.target.files) {
-        setFormData((prevState) => ({
-            ...prevState,
-            images: e.target.files
-        }));
+    // Files
+    if (e.target.files) {
+      setFormData((prevState) => ({
+        ...prevState,
+        images: e.target.files,
+      }));
     }
-    if(!e.target.files) {
-        setFormData((prevState) => ({
-            ...prevState,
-            [e.target.id]: boolean ?? e.target.value
-        }));
+    // Text/Boolean/Number
+    if (!e.target.files) {
+      setFormData((prevState) => ({
+        ...prevState,
+        [e.target.id]: boolean ?? e.target.value,
+      }));
     }
   }
-
   async function onSubmit(e) {
     e.preventDefault();
     setLoading(true);
-    if(discountedPrice >= regularPrice) {
-        setLoading(false);
-        toast.error("Regular Prices need to be more than Discounted Prices!");
-        return;
+    if (+discountedPrice >= +regularPrice) {
+      setLoading(false);
+      toast.error("Discounted price needs to be less than regular price");
+      return;
     }
-    if(images.length > 6) {
-        setLoading(false);
-        toast.error("Maximun 6 images are allowed");
+    if (images.length > 6) {
+      setLoading(false);
+      toast.error("maximum 6 images are allowed");
+      return;
     }
 
     async function storeImage(image) {
       return new Promise((resolve, reject) => {
+        const storage = getStorage();
         const filename = `${auth.currentUser.uid}-${image.name}-${uuidv4()}`;
         const storageRef = ref(storage, filename);
         const uploadTask = uploadBytesResumable(storageRef, image);
-
-        console.log("Upload Bytes Resumable", uploadTask);
-
-        uploadTask.on("state_changed", (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            // Observe state change events such as progress, pause, and resume
+            // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
             console.log("Upload is " + progress + "% done");
-
             switch (snapshot.state) {
-            case "paused":
+              case "paused":
                 console.log("Upload is paused");
                 break;
-            case "running":
+              case "running":
                 console.log("Upload is running");
                 break;
             }
-        },
-        (error) => {
+          },
+          (error) => {
             // Handle unsuccessful uploads
             reject(error);
-        },
-        () => {
+          },
+          () => {
             // Handle successful uploads on complete
             // For instance, get the download URL: https://firebasestorage.googleapis.com/...
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            resolve(downloadURL);
+              resolve(downloadURL);
             });
-        }
+          }
         );
       });
     }
 
     const imgUrls = await Promise.all(
-      [...images]
-        .map((image) => storeImage(image))
-      ).catch((error) => {
-        setLoading(false);
-        toast.error(`Images not uploaded ${error}`);
-        return;
+      [...images].map((image) => storeImage(image))
+    ).catch((error) => {
+      setLoading(false);
+      toast.error(`Images not uploaded. Error: ${error}`);
+      return;
     });
-    console.log(imgUrls);
+
+    const formDataCopy = {
+      ...formData,
+      imgUrls,
+      timestamp: serverTimestamp(),
+      userRef: auth.currentUser.uid,
+    };
+
+    delete formDataCopy.images;
+    !formDataCopy.offer && delete formDataCopy.discountedPrice;
+    delete formDataCopy.latitude;
+    delete formDataCopy.longitude;
+
+    //const docRef = await addDoc(collection(db, "property"), formDataCopy);
+    setLoading(false);
+    toast.success("Property has been add");
+    //navigate(`/category/${formDataCopy.type}/${docRef.id}`);
   }
 
   if(loading) {
@@ -267,32 +287,31 @@ export default function CreateProp() {
             required
             className="w-full px-4 py-2 text-xl text-gray-700 bg-white border border-gray-300 rounded transition duration-150 ease-in-out focus:text-gray-700 focus:bg-white focus:border-slate-600 mb-6"
         />
-        {!geolocationEnabled && (
-            <div className="flex space-x-6 justify-start mb-6">
-            <div className="">
-                <p className="text-lg font-semibold">Latitude</p>
-                <input
-                type="number"
-                id="latitude"
-                value={latitude}
-                onChange={onChange}
-                required
-                className="w-full px-4 py-2 text-xl text-gray-700 bg-white border border-gray-300 rounded transition duration-150 ease-in-out focus:bg-white focus:text-gray-700 focus:border-slate-600 text-center"
-                />
-            </div>
-            <div className="">
-                <p className="text-lg font-semibold">Longitude</p>
-                <input
-                type="number"
-                id="longitude"
-                value={longitude}
-                onChange={onChange}
-                required
-                className="w-full px-4 py-2 text-xl text-gray-700 bg-white border border-gray-300 rounded transition duration-150 ease-in-out focus:bg-white focus:text-gray-700 focus:border-slate-600 text-center"
-                />
-            </div>
-            </div>
-        )}
+        
+        <div className="flex space-x-6 justify-start mb-6">
+        <div className="">
+            <p className="text-lg font-semibold">Latitude</p>
+            <input
+            type="number"
+            id="latitude"
+            value={latitude}
+            onChange={onChange}
+            required
+            className="w-full px-4 py-2 text-xl text-gray-700 bg-white border border-gray-300 rounded transition duration-150 ease-in-out focus:bg-white focus:text-gray-700 focus:border-slate-600 text-center"
+            />
+        </div>
+        <div className="">
+            <p className="text-lg font-semibold">Longitude</p>
+            <input
+            type="number"
+            id="longitude"
+            value={longitude}
+            onChange={onChange}
+            required
+            className="w-full px-4 py-2 text-xl text-gray-700 bg-white border border-gray-300 rounded transition duration-150 ease-in-out focus:bg-white focus:text-gray-700 focus:border-slate-600 text-center"
+            />
+        </div>
+        </div>
         <p className="text-lg font-semibold">Description</p>
         <textarea
             type="text"
