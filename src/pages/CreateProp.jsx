@@ -7,7 +7,6 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
-import { getAuth } from "firebase/auth";
 import { v4 as uuidv4 } from "uuid";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
@@ -32,6 +31,7 @@ export default function CreateListing() {
     longitude: 0,
     images: {},
   });
+
   const {
     type,
     name,
@@ -72,6 +72,7 @@ export default function CreateListing() {
       }));
     }
   }
+
   async function onSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -110,12 +111,9 @@ export default function CreateListing() {
             }
           },
           (error) => {
-            // Handle unsuccessful uploads
             reject(error);
           },
           () => {
-            // Handle successful uploads on complete
-            // For instance, get the download URL: https://firebasestorage.googleapis.com/...
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
               resolve(downloadURL);
             });
@@ -141,8 +139,6 @@ export default function CreateListing() {
 
     delete formDataCopy.images;
     !formDataCopy.offer && delete formDataCopy.discountedPrice;
-    delete formDataCopy.latitude;
-    delete formDataCopy.longitude;
 
     //const docRef = await addDoc(collection(db, "property"), formDataCopy);
     setLoading(false);
