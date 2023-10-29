@@ -8,12 +8,12 @@ import { getStorage } from "firebase/storage";
 console.log(import.meta.env.VITE_FIREBASE_API_KEY);
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_SENDER_ID ,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  authDomain: "chiang-mai-property-invest.firebaseapp.com",
+  projectId: "chiang-mai-property-invest",
+  storageBucket: "chiang-mai-property-invest.appspot.com",
+  messagingSenderId: "640347358844",
+  appId: "1:640347358844:web:97f9f47780c261cff4abf9",
+  measurementId: "G-34949M1WQL"
 };
 
 // Initialize Firebase
